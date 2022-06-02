@@ -64,11 +64,49 @@ void detectFaceAndCrop(bool isDebug, CascadeClassifier &fCascade){
             doCalculations = false;
         }
 
-        //draw rectangle around face if debug enabled and there is a face found
-        if(isDebug && !faceVec.empty() && doCalculations){
-            cv::rectangle(frame, Point(faceVec[0].x, faceVec[0].y), Point(faceVec[0].x + faceVec[0].width, faceVec[0].y + faceVec[0].height), Scalar(255, 20, 114), 5);
-        }
+        //crop and draw
+        if(!faceVec.empty() && doCalculations){
+            //draw rectangle in debug mode
+            if(isDebug)
+                cv::rectangle(frame, Point(faceVec[0].x, faceVec[0].y), Point(faceVec[0].x + faceVec[0].width, faceVec[0].y + faceVec[0].height), Scalar(255, 20, 114), 5);
 
+            //crop image
+            Rect face(faceVec[0]);
+            int areaFace = faceVec[0].area();
+            cv::Size imgSize = frame.size();
+            int imgArea = imgSize.width * imgSize.height;
+
+            Point faceCenter(face.x + (face.width / 2), face.y + (face.height / 2) );
+            Point newTopLeft;
+            Point newBottomRight;
+
+            
+            //calculate crop bounds and adjust if neccessary
+            newTopLeft.x = face.x - face.width;
+            newTopLeft.y = face.y - face.height * 3 / 4;
+            
+            newBottomRight.x = face.x + (face.width * 2);
+            newBottomRight.y = face.y + (face.height * 7 / 4);
+            
+            //bounds errors
+            if(newTopLeft.x < 0){newTopLeft.x = 0;}
+            if(newTopLeft.y < 0){newTopLeft.y = 0;}
+            if(newBottomRight.x > imgSize.width){newBottomRight.x = imgSize.width;}
+            if(newBottomRight.y > imgSize.height){newBottomRight.y = imgSize.height;}
+            
+            Rect crop(newTopLeft, newBottomRight);
+
+            cout << "Top Left: " << newTopLeft.x << " " << newTopLeft.y << "\n";
+            cout << "Bot Right: " << newBottomRight.x << " " << newBottomRight.y << "\n";
+            
+            frame = frame(crop);
+            
+
+
+        }//end if
+
+        
+        //display processed frame
         cv::imshow("Webcam", frame);
 
         //check for key press to exit program
@@ -76,6 +114,6 @@ void detectFaceAndCrop(bool isDebug, CascadeClassifier &fCascade){
             break;
         }
 
-    }
+    }//end while
     
-}
+}//end detectFaceAndCrop
